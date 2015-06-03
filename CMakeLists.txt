@@ -35,7 +35,7 @@ endif()
 # CPM Modules
 #------------------------------------------------------------------------------
 
-CPM_AddModule("AtomException"
+CPM_AddModule("atom-ex"
   GIT_REPOSITORY "https://github.com/darfink/atom-ex.git"
   GIT_TAG "master"
   EXPORT_MODULE TRUE)
