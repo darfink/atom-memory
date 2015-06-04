@@ -36,15 +36,15 @@ namespace atom {
     for(uint i = 0; i < pageCount; i++) {
       MemoryPage page = {};
 
-      page.size = PageSize;
-      page.base = reinterpret_cast<void*>(startPage + (PageSize * i));
+      page.size = Memory::GetPageSize();
+      page.base = reinterpret_cast<void*>(startPage + (page.size * i));
 
       MEMORY_BASIC_INFORMATION memoryInformation;
       ATOM_WINDOWS_ASSERT(VirtualQuery(
         page.base, &memoryInformation, sizeof(MEMORY_BASIC_INFORMATION)));
 
       // We assume that only one page within the region is retrieved
-      assert(PageSize == memoryInformation.RegionSize);
+      assert(page.size == memoryInformation.RegionSize);
 
       int flags = ConvertFromWinFlags(memoryInformation.Protect);
       page.currentFlags = page.initialFlags = page.previousFlags = flags;

@@ -98,9 +98,7 @@ namespace atom {
     assert(address != NULL);
     assert(size > 0);
 
-    if(PageSize == 0) {
-      PageSize = Memory::GetPageSize();
-    }
+    const size_t PageSize = Memory::GetPageSize();
 
     uintptr_t startPage = (reinterpret_cast<uintptr_t>(address) & ~(PageSize - 1));
     uintptr_t lastPage = ((reinterpret_cast<uintptr_t>(address) + size) & ~(PageSize - 1));

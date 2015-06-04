@@ -27,12 +27,6 @@ namespace atom {
     }
   }
 
-  size_t MemoryRegion::GetPageSize() {
-    int pageSize = sysconf(_SC_PAGESIZE);
-    ATOM_SYSTEM_ASSERT(pageSize != -1);
-    return static_cast<size_t>(pageSize);
-  }
-
   void MemoryRegion::UpdateMemoryPages(uintptr_t startPage, size_t pageCount) {
     mPages.clear();
 
@@ -43,8 +37,8 @@ namespace atom {
     for(uint i = 0; i < pageCount; i++) {
       MemoryPage page = {};
 
-      page.size = PageSize;
-      page.base = reinterpret_cast<void*>(startPage + (PageSize * i));
+      page.size = Memory::GetPageSize();
+      page.base = reinterpret_cast<void*>(startPage + (page.size * i));
 
       while(std::getline(fmaps, input)) {
         // Create our regex iterator so we can check each of our group
