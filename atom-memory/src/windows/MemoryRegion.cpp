@@ -33,6 +33,7 @@ namespace atom {
   void MemoryRegion::UpdateMemoryPages(uintptr_t startPage, size_t pageCount) {
     mPages.clear();
 
+    // TODO: Prevent unecessary virtual queries
     for(uint i = 0; i < pageCount; i++) {
       MemoryPage page = {};
 
@@ -42,9 +43,6 @@ namespace atom {
       MEMORY_BASIC_INFORMATION memoryInformation;
       ATOM_WINDOWS_ASSERT(VirtualQuery(
         page.base, &memoryInformation, sizeof(MEMORY_BASIC_INFORMATION)));
-
-      // We assume that only one page within the region is retrieved
-      assert(page.size == memoryInformation.RegionSize);
 
       int flags = ConvertFromWinFlags(memoryInformation.Protect);
       page.currentFlags = page.initialFlags = page.previousFlags = flags;
