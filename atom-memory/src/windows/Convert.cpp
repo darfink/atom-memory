@@ -1,14 +1,18 @@
-#include "Windows.hpp"
+#include <atom-memory/Memory.hpp>
+#include <windows.h>
+#include <cassert>
+
+#include "Convert.hpp"
 
 namespace atom {
-  ulong ConvertToWinFlags(int flags) {
-    ulong result = 0;
+  unsigned long ConvertToWinFlags(int flags) {
+    unsigned long result = 0;
 
-    if(flags == MemoryRegion::Read) {
+    if(flags == Memory::Read) {
       result = PAGE_READONLY;
-    } else if(flags == (MemoryRegion::Read | MemoryRegion::Write)) {
+    } else if(flags == (Memory::Read | Memory::Write)) {
       result = PAGE_READWRITE;
-    } else if(flags == (MemoryRegion::Read | MemoryRegion::Execute)) {
+    } else if(flags == (Memory::Read | Memory::Execute)) {
       result = PAGE_EXECUTE_READ;
     } else if(flags == 0) {
       result = PAGE_NOACCESS;
@@ -19,7 +23,7 @@ namespace atom {
     return result;
   }
 
-  int ConvertFromWinFlags(ulong flags) {
+  int ConvertFromWinFlags(unsigned long flags) {
     int result = 0;
 
     // NOTE: We take advantage of fall-trough cases
@@ -28,19 +32,19 @@ namespace atom {
       result = 0;
       break;
     case PAGE_EXECUTE_READ:
-      result |= MemoryRegion::Read;
+      result |= Memory::Read;
     case PAGE_EXECUTE:
-      result |= MemoryRegion::Execute;
+      result |= Memory::Execute;
       break;
     case PAGE_EXECUTE_READWRITE:
     case PAGE_EXECUTE_WRITECOPY:
-      result = MemoryRegion::ReadWriteExecute;
+      result = Memory::ReadWriteExecute;
       break;
     case PAGE_READWRITE:
     case PAGE_WRITECOPY:
-      result |= MemoryRegion::Write;
+      result |= Memory::Write;
     case PAGE_READONLY:
-      result |= MemoryRegion::Read;
+      result |= Memory::Read;
       break;
     default: assert(false);
     }

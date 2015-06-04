@@ -57,7 +57,9 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     "${FILE_DIR}/src/linux/MemoryRegion.cpp"
     "${FILE_DIR}/src/linux/Memory.cpp")
 else()
+  list(APPEND ModuleHeaders "${FILE_DIR}/src/windows/Convert.hpp")
   list(APPEND ModuleSources
+    "${FILE_DIR}/src/windows/Convert.cpp"
     "${FILE_DIR}/src/windows/MemoryRegion.cpp"
     "${FILE_DIR}/src/windows/Memory.cpp")
 endif()

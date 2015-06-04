@@ -1,7 +1,7 @@
 #include <atom-memory/MemoryRegion.hpp>
 #include <atom-ex/WindowsException.hpp>
 
-#include "Windows.hpp"
+#include "Convert.hpp"
 
 namespace atom {
   void MemoryRegion::SetFlags(int flags) {
