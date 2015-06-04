@@ -1,4 +1,4 @@
-#include <AtomMemoryRegion/MemoryRegion.hpp>
+#include <atom-memory/MemoryRegion.hpp>
 #include <sys/mman.h>
 #include <unistd.h>
 #include <string>
