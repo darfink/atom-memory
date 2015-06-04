@@ -24,7 +24,6 @@ namespace atom {
   class MemoryRegion {
   private:
     // Private members
-    static size_t PageSize;
     std::vector<MemoryPage> mPages;
 
   public:
