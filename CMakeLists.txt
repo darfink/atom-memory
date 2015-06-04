@@ -47,13 +47,19 @@ CPM_InitModule(${CPM_MODULE_NAME})
 # Setup source
 #-----------------------------------------------------------------------
 
-set(UNICODE_DIR "${CMAKE_CURRENT_LIST_DIR}/atom-memory")
-set(ModuleHeaders "${UNICODE_DIR}/MemoryRegion.hpp")
+set(FILE_DIR "${CMAKE_CURRENT_LIST_DIR}/atom-memory")
+set(ModuleHeaders
+  "${FILE_DIR}/MemoryRegion.hpp"
+  "${FILE_DIR}/Memory.hpp")
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  set(ModuleSources "${UNICODE_DIR}/src/linux/MemoryRegion.cpp")
+  list(APPEND ModuleSources
+    "${FILE_DIR}/src/linux/MemoryRegion.cpp"
+    "${FILE_DIR}/src/linux/Memory.cpp")
 else()
-  set(ModuleSources "${UNICODE_DIR}/src/windows/MemoryRegion.cpp")
+  list(APPEND ModuleSources
+    "${FILE_DIR}/src/windows/MemoryRegion.cpp"
+    "${FILE_DIR}/src/windows/Memory.cpp")
 endif()
 
 #-----------------------------------------------------------------------

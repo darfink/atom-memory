@@ -1,4 +1,5 @@
 #include <atom-memory/MemoryRegion.hpp>
+#include <atom-ex/SystemException.hpp>
 #include <sys/mman.h>
 #include <unistd.h>
 #include <string>
@@ -7,19 +8,11 @@
 #include <map>
 
 namespace atom {
-  size_t MemoryRegion::PageSize;
-
-  const ulong MemoryRegion::ReadWriteExecute =
-    MemoryRegion::Execute | MemoryRegion::Write | MemoryRegion::Read;
-
   void MemoryRegion::SetFlags(int flags) {
     for(MemoryPage& page : mPages) {
       page.previousFlags = page.currentFlags;
 
-      if(!mprotect(page.base, page.size, flags)) {
-        throw Exception(ATOM_EXCEPTION_INFO, "Couldn't update memory protection flags");
-      }
-
+      ATOM_SYSTEM_ASSERT(mprotect(page.base, page.size, flags));
       page.currentFlags = flags;
     }
   }
@@ -29,21 +22,14 @@ namespace atom {
       ulong flags = (initial ? page.initialFlags : page.previousFlags);
       page.previousFlags = page.currentFlags;
 
-      if(!mprotect(page.base, page.size, flags)) {
-        throw Exception(ATOM_EXCEPTION_INFO, "Couldn't update memory protection flags");
-      }
-
+      ATOM_SYSTEM_ASSERT(mprotect(page.base, page.size, flags));
       page.currentFlags = flags;
     }
   }
 
   size_t MemoryRegion::GetPageSize() {
     int pageSize = sysconf(_SC_PAGESIZE);
-
-    if(pageSize == -1) {
-      throw Exception(ATOM_EXCEPTION_INFO, "Couldn't retrieve OS page size");
-    }
-
+    ATOM_SYSTEM_ASSERT(pageSize != -1);
     return static_cast<size_t>(pageSize);
   }
 

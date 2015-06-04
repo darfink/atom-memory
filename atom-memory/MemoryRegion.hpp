@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atom-ex/Exception.hpp>
+#include <atom-memory/Memory.hpp>
 #include <functional>
 #include <cassert>
 #include <vector>
@@ -11,9 +12,7 @@ namespace {
 }
 
 namespace atom {
-  /// <summary>
-  /// Describes a page within the region
-  /// </summary>
+  /* Describes a page within the region */
   struct MemoryPage {
     size_t size;
     void* base;
@@ -29,73 +28,70 @@ namespace atom {
     std::vector<MemoryPage> mPages;
 
   public:
-    /// <summary>
-    /// Describes the different memory flags
-    /// </summary>
-    enum Flag {
-      Execute = (1 << 0),
-      Write   = (1 << 1),
-      Read    = (1 << 2),
-    };
-
-    // A shorthand constant for execute, read and write permissions
-    static const ulong ReadWriteExecute;
-
-  public:
-    /// <summary>
-    /// The exception this class throws
-    /// </summary>
+    /* The exception this class throws */
     ATOM_DEFINE_EXCEPTION(Exception);
 
-    /// <summary>
-    /// Constructs a memory region from an address and size
-    /// </summary>
+    /* Constructs a memory region from an address and size
+     *
+     * @address The address in memory
+     * @size The size of the memory
+     */
     MemoryRegion(void* address, size_t size);
 
-    /// <summary>
-    /// Executes a function while temporarily changing memory region flags
-    /// </summary>
+    /* Executes a function while temporarily changing memory region flags
+     *
+     * @flags The target permissions for the region
+     * @function The callback function to execute
+     */
     void ExecuteFunction(int flags, std::function<void()> function);
 
-    /// <summary>
-    /// Sets the protection flags for all pages within the region
-    /// </summary>
+    /* Sets the protection flags for all pages within the region
+     *
+     * @flags The target permission for the region
+     */
     void SetFlags(int flags);
 
-    /// <summary>
-    /// Resets the memory page flags to their initial condition
-    /// </summary>
+    /* Resets the memory page flags to their previous condition
+     *
+     * @initial Reset to the initial memory flags
+     */
     void ResetFlags(bool initial);
 
-    /// <summary>
-    /// Gets the number of pages within the region
-    /// </summary>
+    /* Gets the number of system pages within the region
+     *
+     * @return The number of pages
+     */
     size_t GetPageCount() const;
 
-    /// <summary>
-    /// Returns a memory page at a specific index
-    /// </summary>
+    /* Returns a memory page at a specific index
+     *
+     * @index The index of the memory page
+     * @return The memory page
+     */
     const MemoryPage& operator[](size_t index) const;
 
-    /// <summary>
-    /// Returns an iterator to the beginning of the array
-    /// </summary>
+    /* Returns an iterator to the beginning of the array
+     *
+     * @return The memory page iterator (begin)
+     */
     std::vector<MemoryPage>::const_iterator begin() const;
 
-    /// <summary>
-    /// Returns an iterator at the end of the array
-    /// </summary>
+    /* Returns an iterator at the end of the array
+     *
+     * @return The memory page iterator (end)
+     */
     std::vector<MemoryPage>::const_iterator end() const;
 
   private:
-    /// <summary>
-    /// Gets the page size of the operating system
-    /// </summary>
-    static size_t GetPageSize();
-
-    /// <summary>
-    /// Updates all memory pages to their current permission flags
-    /// </summary>
+    /* Updates all memory pages to their current permission flags
+     *
+     * This is used in case an outside factor changed the flags
+     * during operations (e.g another code, process or the operating
+     * system might have altered the permissions.
+     *
+     * @startPage The address of the first page
+     * @pageCount The number of pages
+     */
     void UpdateMemoryPages(uintptr_t startPage, size_t pageCount);
   };
 
@@ -104,7 +100,7 @@ namespace atom {
     assert(size > 0);
 
     if(PageSize == 0) {
-      PageSize = this->GetPageSize();
+      PageSize = Memory::GetPageSize();
     }
 
     uintptr_t startPage = (reinterpret_cast<uintptr_t>(address) & ~(PageSize - 1));
