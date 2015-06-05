@@ -6,16 +6,13 @@
 #include <cassert>
 #include <vector>
 
-namespace {
-  typedef unsigned long ulong;
-  typedef unsigned int uint;
-}
-
 namespace atom {
   /* Describes a page within the region */
   struct MemoryPage {
     size_t size;
     void* base;
+    bool committed;
+    bool guarded;
     int currentFlags;
     int previousFlags;
     int initialFlags;
@@ -30,12 +27,17 @@ namespace atom {
     /* The exception this class throws */
     ATOM_DEFINE_EXCEPTION(Exception);
 
-    /* Constructs a memory region from an address and size
+    /* Constructs a memory region
+     *
+     * Creates a memory region manager from an address, enabling an interface
+     * to query and change permissions. In case no size is specified, the
+     * region will contain all the pages that lie consecutively in memory with
+     * the same permissions, relative to the specified address.
      *
      * @address The address in memory
      * @size The size of the memory
      */
-    MemoryRegion(void* address, size_t size);
+    explicit MemoryRegion(void* address, size_t size = 0);
 
     /* Executes a function while temporarily changing memory region flags
      *
@@ -61,6 +63,12 @@ namespace atom {
      * @return The number of pages
      */
     size_t GetPageCount() const;
+
+    /* Gets the region size in bytes
+     *
+     * @return The size in bytes
+     */
+    size_t GetRegionSize() const;
 
     /* Returns a memory page at a specific index
      *
@@ -96,15 +104,17 @@ namespace atom {
 
   inline MemoryRegion::MemoryRegion(void* address, size_t size) {
     assert(address != NULL);
-    assert(size > 0);
 
     const size_t PageSize = Memory::GetPageSize();
 
     uintptr_t startPage = (reinterpret_cast<uintptr_t>(address) & ~(PageSize - 1));
-    uintptr_t lastPage = ((reinterpret_cast<uintptr_t>(address) + size) & ~(PageSize - 1));
+    size_t pageCount = 0;
 
-    size_t pageCount = ((lastPage - startPage) / PageSize) + 1;
-    mPages.reserve(pageCount);
+    if(size > 0) {
+      uintptr_t lastPage = ((reinterpret_cast<uintptr_t>(address) + size) & ~(PageSize - 1));
+      pageCount = ((lastPage - startPage) / PageSize) + 1;
+      mPages.reserve(pageCount);
+    }
 
     // The rest is OS specific, so we leave it here
     this->UpdateMemoryPages(startPage, pageCount);
@@ -118,6 +128,10 @@ namespace atom {
 
   inline size_t MemoryRegion::GetPageCount() const {
     return mPages.size();
+  }
+
+  inline size_t MemoryRegion::GetRegionSize() const {
+    return this->GetPageCount() * Memory::GetPageSize();
   }
 
   inline const MemoryPage& MemoryRegion::operator[](size_t index) const {

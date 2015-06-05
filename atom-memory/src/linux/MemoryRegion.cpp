@@ -19,7 +19,7 @@ namespace atom {
 
   void MemoryRegion::ResetFlags(bool initial) {
     for(MemoryPage& page : mPages) {
-      ulong flags = (initial ? page.initialFlags : page.previousFlags);
+      unsigned long flags = (initial ? page.initialFlags : page.previousFlags);
       page.previousFlags = page.currentFlags;
 
       ATOM_SYSTEM_ASSERT(mprotect(page.base, page.size, flags));
@@ -34,11 +34,16 @@ namespace atom {
     std::regex regex("^([0-9a-fA-F]+)-[0-9a-fA-F]+ (\\w|-){4}");
     std::string input;
 
-    for(uint i = 0; i < pageCount; i++) {
+    // TODO: support pageCount = 0
+    assert(pageCount > 0);
+
+    for(size_t i = 0; i < pageCount; i++) {
       MemoryPage page = {};
 
       page.size = Memory::GetPageSize();
       page.base = reinterpret_cast<void*>(startPage + (page.size * i));
+      page.committed = true;
+      page.guarded = false;
 
       while(std::getline(fmaps, input)) {
         // Create our regex iterator so we can check each of our group
@@ -49,13 +54,13 @@ namespace atom {
 
         // The addresses are in hex, and therefore we must add '0x'
         // otherwise 'stoul' won't recognize the string as hex
-        if(std::stoul(address, 0, 16) != reinterpret_cast<ulong>(page.base)) {
+        if(std::stoul(address, 0, 16) != reinterpret_cast<unsigned long>(page.base)) {
           continue;
         }
 
         std::string permissions = *(++it);
 
-        static const std::map<char, ulong> Keys = {
+        static const std::map<char, unsigned long> Keys = {
           { 'r', Read },
           { 'w', Write },
           { 'x', Execute },

@@ -1,14 +1,15 @@
 #include <atom-memory/MemoryRegion.hpp>
 #include <atom-ex/WindowsException.hpp>
+#include <windows.h>
 
 #include "Convert.hpp"
 
 namespace atom {
   void MemoryRegion::SetFlags(int flags) {
-    ulong winFlags = ConvertToWinFlags(flags);
+    unsigned long winFlags = ConvertToWinFlags(flags);
 
     for(MemoryPage& page : mPages) {
-      ulong previousFlags;
+      unsigned long previousFlags;
       ATOM_WINDOWS_ASSERT(VirtualProtect(
         page.base, page.size, winFlags, &previousFlags));
 
@@ -19,8 +20,8 @@ namespace atom {
 
   void MemoryRegion::ResetFlags(bool initial) {
     for(MemoryPage& page : mPages) {
-      ulong flags = (initial ? page.initialFlags : page.previousFlags);
-      ulong previousFlags;
+      unsigned long flags = (initial ? page.initialFlags : page.previousFlags);
+      unsigned long previousFlags;
 
       ATOM_WINDOWS_ASSERT(VirtualProtect(
         page.base, page.size, ConvertToWinFlags(flags), &previousFlags));
@@ -33,21 +34,34 @@ namespace atom {
   void MemoryRegion::UpdateMemoryPages(uintptr_t startPage, size_t pageCount) {
     mPages.clear();
 
-    // TODO: Prevent unecessary virtual queries
-    for(uint i = 0; i < pageCount; i++) {
-      MemoryPage page = {};
+    const size_t PageSize = Memory::GetPageSize();
 
-      page.size = Memory::GetPageSize();
-      page.base = reinterpret_cast<void*>(startPage + (page.size * i));
+    do {
+      void* base = reinterpret_cast<void*>(startPage + (PageSize * mPages.size()));
 
       MEMORY_BASIC_INFORMATION memoryInformation;
       ATOM_WINDOWS_ASSERT(VirtualQuery(
-        page.base, &memoryInformation, sizeof(MEMORY_BASIC_INFORMATION)));
+        base, &memoryInformation, sizeof(MEMORY_BASIC_INFORMATION)));
 
+      size_t pagesInRegion = memoryInformation.RegionSize / PageSize;
       int flags = ConvertFromWinFlags(memoryInformation.Protect);
-      page.currentFlags = page.initialFlags = page.previousFlags = flags;
 
-      mPages.push_back(page);
-    }
+      // When a memory region is queried on Windows, the size is equal to all
+      // memory pages that lie consecutively in memory with the same flags.
+      // To avoid unnecessary API calls, one might be enough to retrieve the
+      // memory information relative to the supplied page count. In case the
+      // page count is zero, we retrieve all pages within the region.
+      for(size_t i = 0; i < pagesInRegion && (pageCount == 0 || mPages.size() < pageCount); i++) {
+        MemoryPage page = {};
+
+        page.size = PageSize;
+        page.base = reinterpret_cast<void*>(startPage + (PageSize * mPages.size()));
+        page.currentFlags = page.initialFlags = page.previousFlags = flags;
+        page.guarded = !!(memoryInformation.Protect & PAGE_GUARD);
+        page.committed = !!(memoryInformation.State & MEM_COMMIT);
+
+        mPages.push_back(page);
+      }
+    } while(mPages.size() < pageCount);
   }
 }
